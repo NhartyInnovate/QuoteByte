@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuoteByte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='3') }}">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-brand">QuoteByte</div>
+      <a href="#subscribe" class="nav-link">Subscribe</a>
+    </div>
+  </nav>
+
+  <main class="landing-shell">
+    <section class="hero-layout">
+      <div class="hero-copy">
+        <span class="eyebrow">Daily quotes for thoughtful people</span>
+        <h1>Start your day with words that stay with you.</h1>
+        <p class="hero-text">
+          Subscribe to receive one carefully selected quote each day — short, powerful,
+          and designed to spark clarity, reflection, and momentum.
+        </p>
+
+        <form method="POST" class="subscribe-form" id="subscribe">
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email address"
+            class="email-input"
+            required
+          >
+          <button type="submit" class="subscribe-btn pulse-btn">Subscribe Free</button>
+        </form>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for message in messages %}
+                <div class="flash-message">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <div class="quote-panel">
+        <div class="quote-card" id="quoteCard">
+          <div class="quote-mark">“</div>
+          <p class="quote-text" id="quoteText">{{ quote.Quote }}</p>
+          <p class="quote-author" id="quoteAuthor">{{ quote.Author }}</p>
+
+          <div class="quote-tags" id="quoteTags">
+            {% for tag in quote.Tags.split(",") %}
+              <span>{{ tag.strip() }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="quote-actions">
+            <button class="refresh-btn" id="refreshQuoteBtn" type="button">
+              Refresh Quote
+            </button>
+            <span class="trial-text" id="trialText">5 free refreshes left</span>
+          </div>
+
+          <div class="quote-overlay hidden" id="quoteOverlay">
+            <div class="overlay-content">
+              <h3>Want more fresh quotes?</h3>
+              <p>Subscribe to QuoteByte and get inspiring quotes delivered daily.</p>
+              <button type="button" class="overlay-btn" id="overlaySubscribeBtn">
+                Subscribe for More
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">QuoteByte</div>
+        <p class="footer-text">A daily dose of words that move you.</p>
+      </div>
+
+      <div class="footer-links">
+        <a href="#subscribe">Subscribe</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </div>
+
+      <div class="footer-copy">
+        © 2026 QuoteByte. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const refreshBtn = document.getElementById("refreshQuoteBtn");
+    const quoteOverlay = document.getElementById("quoteOverlay");
+    const overlaySubscribeBtn = document.getElementById("overlaySubscribeBtn");
+    const subscribeSection = document.getElementById("subscribe");
+
+    const quoteCard = document.getElementById("quoteCard");
+    const quoteText = document.getElementById("quoteText");
+    const quoteAuthor = document.getElementById("quoteAuthor");
+    const quoteTags = document.getElementById("quoteTags");
+    const trialText = document.getElementById("trialText");
+
+    const MAX_TRIALS = 5;
+
+    function getTrialsLeft() {
+      let trials = localStorage.getItem("quoteTrials");
+      if (!trials) {
+        localStorage.setItem("quoteTrials", MAX_TRIALS);
+        return MAX_TRIALS;
+      }
+      return parseInt(trials, 10);
+    }
+
+    function setTrialsLeft(value) {
+      localStorage.setItem("quoteTrials", value);
+    }
+
+    function updateTrialText() {
+      const trials = getTrialsLeft();
+      trialText.textContent =
+        trials > 0 ? `${trials} free refresh${trials === 1 ? "" : "es"} left` : "No free refreshes left";
+    }
+
+    function checkWeeklyReset() {
+      const lastReset = localStorage.getItem("lastReset");
+      const now = new Date();
+
+      if (!lastReset) {
+        localStorage.setItem("lastReset", now.toISOString());
+        return;
+      }
+
+      const last = new Date(lastReset);
+      const diffDays = (now - last) / (1000 * 60 * 60 * 24);
+
+      if (diffDays >= 7) {
+        setTrialsLeft(MAX_TRIALS);
+        localStorage.setItem("lastReset", now.toISOString());
+      }
+    }
+
+    async function loadNewQuote() {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = "Loading...";
+
+      quoteCard.classList.add("quote-switching");
+
+      try {
+        const response = await fetch("/random-quote");
+        const data = await response.json();
+
+        setTimeout(() => {
+          quoteText.textContent = data.Quote;
+          quoteAuthor.textContent = data.Author;
+
+          quoteTags.innerHTML = "";
+          data.Tags.split(",").forEach(tag => {
+            const span = document.createElement("span");
+            span.textContent = tag.trim();
+            quoteTags.appendChild(span);
+          });
+
+          quoteCard.classList.remove("quote-switching");
+        }, 220);
+      } catch (error) {
+        console.error("Failed to load quote:", error);
+        quoteCard.classList.remove("quote-switching");
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "Refresh Quote";
+      }
+    }
+
+    refreshBtn.addEventListener("click", async () => {
+      let trials = getTrialsLeft();
+
+      if (trials > 0) {
+        trials -= 1;
+        setTrialsLeft(trials);
+        updateTrialText();
+        await loadNewQuote();
+      } else {
+        quoteOverlay.classList.remove("hidden");
+        setTimeout(() => {
+          quoteOverlay.classList.add("show");
+        }, 10);
+      }
+    });
+
+    overlaySubscribeBtn.addEventListener("click", () => {
+      quoteOverlay.classList.remove("show");
+      setTimeout(() => {
+        quoteOverlay.classList.add("hidden");
+      }, 280);
+      subscribeSection.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    window.addEventListener("load", function () {
+      checkWeeklyReset();
+      updateTrialText();
+
+      setTimeout(() => {
+        document.querySelectorAll(".flash-message").forEach((msg) => {
+          msg.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+          msg.style.opacity = "0";
+          msg.style.transform = "translateY(-8px)";
+          setTimeout(() => msg.remove(), 400);
+        });
+      }, 2400);
+    });
+  </script>
+</body>
+</html>
