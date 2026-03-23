@@ -7,3 +7,4 @@ venv/
 .idea/
 subscribers.csv
 main.py
+quotes.csv
