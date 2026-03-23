@@ -1,7 +1,7 @@
 import csv
 import os
 import random
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 
 app = Flask(__name__)
 app.secret_key = "daily-quotes-secret-key"
@@ -66,13 +66,7 @@ def home():
             flash("Please enter a valid email address.")
             return redirect(url_for("home"))
 
-        saved = save_email(email)
-
-        if not saved:
-            flash("This email is already subscribed.")
-            return redirect(url_for("home"))
-
-        flash("You have successfully subscribed for daily quotes.")
+        flash("Thanks for subscribing. QuoteByte is currently in demo mode.")
         return redirect(url_for("home"))
 
     return render_template("index.html", quote=quote)
@@ -81,6 +75,10 @@ def home():
 def random_quote():
     quote = get_random_quote()
     return jsonify(quote)
+
+@app.route("/styles.css")
+def serve_css():
+    return send_from_directory("public", "style.css")
 
 if __name__ == "__main__":
     app.run()

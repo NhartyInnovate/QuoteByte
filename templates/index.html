@@ -7,7 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  {% if '127.0.0.1' in request.host or 'localhost' in request.host %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% else %}
   <link rel="stylesheet" href="/style.css?v=2">
+  {% endif %}
 </head>
 <body>
   <nav class="navbar">
