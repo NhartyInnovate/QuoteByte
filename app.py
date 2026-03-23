@@ -3,7 +3,7 @@ import os
 import random
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public", static_url_path="")
 app.secret_key = "daily-quotes-secret-key"
 
 QUOTES_FILE = "quotes.csv"
