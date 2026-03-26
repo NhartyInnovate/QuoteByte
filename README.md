@@ -37,6 +37,10 @@ QuoteByte/
 └── scraper/
     └── main.py
 
+## 🌐 Live Demo
+
+[🚀 View Live App](https://quote-byte.vercel.app/)
+
 
 ## How It Works
 
